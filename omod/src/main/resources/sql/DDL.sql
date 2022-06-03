@@ -38,6 +38,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_tb_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_enrollment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_follow_up_visit;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_mchs_delivery;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_mchs_infants;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_mchs_discharge;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_immunization;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patients_booked_today;
@@ -554,6 +555,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     date_of_delivery DATETIME,
     blood_loss INT(11),
     condition_of_mother INT(11),
+    delivery_outcome VARCHAR (255) NULL,
     apgar_score_1min  DOUBLE,
     apgar_score_5min  DOUBLE,
     apgar_score_10min DOUBLE,
@@ -605,6 +607,26 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
 
   );
   SELECT "Successfully created etl_mchs_delivery table";
+
+ ---------------- create table etl_mchs_infants ------------------------
+CREATE TABLE kenyaemr_etl.etl_mchs_infants
+(
+    encounter_id INT NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL,
+    obs_group_id INT(11) NULL,
+    infant_name VARCHAR(255) DEFAULT NULL,
+    gender VARCHAR (255) DEFAULT NULL,
+    birth_weight INT DEFAULT NULL,
+    condition VARCHAR(255) DEFAULT NULL,
+    birth_with_deformity VARCHAR(255),
+    teo_given varchar(255) DEFAULT NULL,
+    bf_within_one_hour VARCHAR(255),
+    apgar_score_1min  DOUBLE,
+    apgar_score_5min  DOUBLE,
+    apgar_score_10min DOUBLE,
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id)
+);
+SELECT "Successfully created etl_mchs_infants table";
 
   -- ------------ create table etl_mchs_discharge-----------------------
 
