@@ -845,7 +845,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 
 		-------------- update etl_mchs_infants
 DROP PROCEDURE IF EXISTS sp_update_etl_mchs_infants$$
-CREATE PROCEDURE sp_update_etl_mchs_infants(IN last_update_time)
+CREATE PROCEDURE sp_update_etl_mchs_infants(IN last_update_time DATETIME)
     BEGIN
      insert into kenyaemr_etl.etl_mchs_infants(
          encounter_id,
@@ -988,7 +988,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 				max(if(o.concept_id=5599,o.value_datetime,null)) as date_of_delivery,
 				max(if(o.concept_id=162092,o.value_coded,null)) as blood_loss,
 				max(if(o.concept_id=1856,o.value_coded,null)) as condition_of_mother,
-                max(if(o.concept_id=159949,(case  o.value_coded when  159913 then "Single" when 159914 then "Twins" when 159915 then "Triplets" else ""),null)) as delivery_outcome,
+                max(if(o.concept_id=159949,(case  o.value_coded when  159913 then "Single" when 159914 then "Twins" when 159915 then "Triplets" else "" end),null)) as delivery_outcome,
 				max(if(o.concept_id=159603,o.value_numeric,null)) as apgar_score_1min,
 				max(if(o.concept_id=159604,o.value_numeric,null)) as apgar_score_5min,
 				max(if(o.concept_id=159605,o.value_numeric,null)) as apgar_score_10min,
