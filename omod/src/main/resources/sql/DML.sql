@@ -926,9 +926,9 @@ CREATE PROCEDURE sp_populate_etl_mch_infants()
     BEGIN
         SELECT "Processing MCH Infants", CONCAT("Time: ", NOW());
         insert into kenyaemr_etl.etl_mchs_infants(
+            obs_group_id,
             encounter_id,
             patient_id,
-            obs_group_id,
             infant_name,
             gender,
             birth_weight,
@@ -941,9 +941,9 @@ CREATE PROCEDURE sp_populate_etl_mch_infants()
             apgar_score_10min
         )
         SELECT
+            o.obs_group_id,
             e.encounter_id,
             e.patient_id,
-            o.obs_group_id,
             max(if(o.concept_id = 1586, o.value_text, NULL))      AS infant_name,
             max(if(o.concept_id = 1587, (CASE o.value_coded
                                              WHEN 1534
@@ -994,7 +994,7 @@ CREATE PROCEDURE sp_populate_etl_mch_infants()
                          uuid IN ('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
              ) f ON f.form_id = e.form_id
         WHERE e.voided = 0
-        GROUP BY e.encounter_id;
+        GROUP BY o.obs_group_id;
 SELECT "Completed processing MCH Infants", CONCAT("Time: ", NOW());
 END$$
 

@@ -848,9 +848,9 @@ DROP PROCEDURE IF EXISTS sp_update_etl_mchs_infants$$
 CREATE PROCEDURE sp_update_etl_mchs_infants(IN last_update_time DATETIME)
     BEGIN
      insert into kenyaemr_etl.etl_mchs_infants(
+         obs_group_id,
          encounter_id,
          patient_id,
-         obs_group_id,
          infant_name,
          gender,
          birth_weight,
@@ -863,9 +863,9 @@ CREATE PROCEDURE sp_update_etl_mchs_infants(IN last_update_time DATETIME)
          apgar_score_10min
      )
      SELECT
+         o.obs_group_id,
          e.encounter_id,
          e.patient_id,
-         o.obs_group_id,
          max(if(o.concept_id = 1586, o.value_text, NULL))      AS infant_name,
          max(if(o.concept_id = 1587, (CASE o.value_coded
                                           WHEN 1534
@@ -916,7 +916,7 @@ CREATE PROCEDURE sp_update_etl_mchs_infants(IN last_update_time DATETIME)
                       uuid IN ('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
           ) f ON f.form_id = e.form_id
      WHERE e.voided = 0
-     GROUP BY e.encounter_id
+     GROUP BY o.obs_group_id
          ON DUPLICATE KEY UPDATE encounter_id=VALUES(encounter_id),patient_id=VALUES(patient_id),obs_group_id=VALUES(obs_group_id),infant_name=VALUES(infant_name),date_created=VALUES(date_created),gender=VALUES(gender),birth_weight=VALUES(birth_weight),infant_condition=VALUES(infant_condition),birth_with_deformity=VALUES(birth_with_deformity),teo_given=VALUES(teo_given),bf_within_one_hour=VALUES(bf_within_one_hour),apgar_score_1min=VALUES(apgar_score_1min),
     apgar_score_5min=VALUES(apgar_score_5min),apgar_score_10min=VALUES(apgar_score_10min)
 ;

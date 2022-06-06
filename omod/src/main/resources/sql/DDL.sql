@@ -611,9 +611,9 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
  ---------------- create table etl_mchs_infants ------------------------
 CREATE TABLE kenyaemr_etl.etl_mchs_infants
 (
-    encounter_id INT NOT NULL PRIMARY KEY,
+    obs_group_id INT(11) NULL PRIMARY KEY,
+    encounter_id INT NOT NULL,
     patient_id INT(11) NOT NULL,
-    obs_group_id INT(11) NULL,
     infant_name VARCHAR(255) DEFAULT NULL,
     gender VARCHAR (255) DEFAULT NULL,
     birth_weight INT DEFAULT NULL,
