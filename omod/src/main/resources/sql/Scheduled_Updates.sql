@@ -882,7 +882,14 @@ CREATE PROCEDURE sp_update_etl_mchs_infants(IN last_update_time DATETIME)
                                             WHEN 135436
                                                 THEN "Macerated still birth"
                                             ELSE "" END), NULL))   AS infant_condition,
-         max(if(o.concept_id = 164122, o.value_coded, NULL))   AS birth_with_deformity,
+         max(if(o.concept_id = 164122,(CASE o.value_coded
+                                           WHEN 155871
+                                               THEN "Yes"
+                                           WHEN 1066
+                                               THEN "No"
+                                           WHEN 1175
+                                               THEN "N/A"
+                                           ELSE "" END) , NULL))   AS birth_with_deformity,
          max(if(o.concept_id = 1282, (CASE o.value_coded
                                           WHEN 84893
                                               THEN "Yes"
