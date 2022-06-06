@@ -617,7 +617,7 @@ CREATE TABLE kenyaemr_etl.etl_mchs_infants
     infant_name VARCHAR(255) DEFAULT NULL,
     gender VARCHAR (255) DEFAULT NULL,
     birth_weight INT DEFAULT NULL,
-    condition VARCHAR(255) DEFAULT NULL,
+    infant_condition VARCHAR(255) DEFAULT NULL,
     birth_with_deformity VARCHAR(255),
     teo_given varchar(255) DEFAULT NULL,
     bf_within_one_hour VARCHAR(255),

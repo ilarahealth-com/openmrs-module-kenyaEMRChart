@@ -920,6 +920,83 @@ from encounter e
 		SELECT "Completed processing MCH antenatal visits ", CONCAT("Time: ", NOW());
 		END$$
 
+-- ------------ populate etl mchs_infants -----------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_mch_infants$$
+CREATE PROCEDURE sp_populate_etl_mch_infants()
+    BEGIN
+        SELECT "Processing MCH Infants", CONCAT("Time: ", NOW());
+        insert into kenyaemr_etl.etl_mchs_infants(
+            encounter_id,
+            patient_id,
+            obs_group_id,
+            infant_name,
+            gender,
+            birth_weight,
+            infant_condition,
+            birth_with_deformity,
+            teo_given,
+            bf_within_one_hour,
+            apgar_score_1min,
+            apgar_score_5min,
+            apgar_score_10min
+        )
+        SELECT
+            e.encounter_id,
+            e.patient_id,
+            o.obs_group_id,
+            max(if(o.concept_id = 1586, o.value_text, NULL))      AS infant_name,
+            max(if(o.concept_id = 1587, (CASE o.value_coded
+                                             WHEN 1534
+                                                 THEN "Male"
+                                             WHEN 1535
+                                                 THEN "Female"
+                                             ELSE "" END), NULL))     AS gender,
+            max(if(o.concept_id = 165578, o.value_numeric, NULL)) AS birth_weight,
+            max(if(o.concept_id = 159917, (CASE o.value_coded
+                                               WHEN 151849
+                                                   THEN "Live birth"
+                                               WHEN 159916
+                                                   THEN "Fresh still birth"
+                                               WHEN 135436
+                                                   THEN "Macerated still birth"
+                                               ELSE "" END), NULL))   AS infant_condition,
+            max(if(o.concept_id = 164122, o.value_coded, NULL))   AS birth_with_deformity,
+            max(if(o.concept_id = 1282, (CASE o.value_coded
+                                             WHEN 84893
+                                                 THEN "Yes"
+                                             WHEN 1066
+                                                 THEN "No"
+                                             WHEN 1175
+                                                 THEN "N/A"
+                                             ELSE "" END), NULL))     AS teo_given,
+            max(if(o.concept_id = 161543, (CASE o.value_coded
+                                               WHEN 1065
+                                                   THEN "Yes"
+                                               WHEN 1066
+                                                   THEN "No"
+                                               ELSE "" END), NULL))   AS bf_within_one_hour,
+            max(if(o.concept_id = 159603, o.value_numeric, NULL)) AS apgar_score_1min,
+            max(if(o.concept_id = 159604, o.value_numeric, NULL)) AS apgar_score_5min,
+            max(if(o.concept_id = 159605, o.value_numeric, NULL)) AS apgar_score_10min
+        FROM encounter e
+                 INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
+                 INNER JOIN obs o ON e.encounter_id = o.encounter_id AND o.voided = 0
+            AND o.concept_id IN
+                (1586, 159603, 159604, 159605, 1587, 159917, 1282, 159917, 1282, 165578, 1282, 165578, 161543, 164122)
+                 INNER JOIN
+             (
+                 SELECT
+                     form_id,
+                     uuid,
+                     name
+                 FROM form
+                 WHERE
+                         uuid IN ('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
+             ) f ON f.form_id = e.form_id
+        WHERE e.voided = 0
+        GROUP BY e.encounter_id;
+SELECT "Completed processing MCH Infants", CONCAT("Time: ", NOW());
+END$$
 
 -- ------------- populate etl_mchs_delivery-------------------------
 
@@ -5050,6 +5127,7 @@ CALL sp_populate_etl_tb_screening();
 CALL sp_populate_etl_hei_enrolment();
 CALL sp_populate_etl_hei_immunization();
 CALL sp_populate_etl_hei_follow_up();
+CALL sp_populate_etl_mch_infants();
 CALL sp_populate_etl_mch_delivery();
 CALL sp_populate_etl_mch_discharge();
 CALL sp_drug_event();
