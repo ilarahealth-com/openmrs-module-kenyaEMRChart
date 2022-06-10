@@ -848,9 +848,9 @@ DROP PROCEDURE IF EXISTS sp_update_etl_mchs_infants$$
 CREATE PROCEDURE sp_update_etl_mchs_infants(IN last_update_time DATETIME)
     BEGIN
      insert into kenyaemr_etl.etl_mchs_infants(
+         obs_group_id,
          encounter_id,
          patient_id,
-         obs_group_id,
          infant_name,
          gender,
          birth_weight,
@@ -863,9 +863,9 @@ CREATE PROCEDURE sp_update_etl_mchs_infants(IN last_update_time DATETIME)
          apgar_score_10min
      )
      SELECT
+         o.obs_group_id,
          e.encounter_id,
          e.patient_id,
-         o.obs_group_id,
          max(if(o.concept_id = 1586, o.value_text, NULL))      AS infant_name,
          max(if(o.concept_id = 1587, (CASE o.value_coded
                                           WHEN 1534
@@ -882,7 +882,14 @@ CREATE PROCEDURE sp_update_etl_mchs_infants(IN last_update_time DATETIME)
                                             WHEN 135436
                                                 THEN "Macerated still birth"
                                             ELSE "" END), NULL))   AS infant_condition,
-         max(if(o.concept_id = 164122, o.value_coded, NULL))   AS birth_with_deformity,
+         max(if(o.concept_id = 164122,(CASE o.value_coded
+                                           WHEN 155871
+                                               THEN "Yes"
+                                           WHEN 1066
+                                               THEN "No"
+                                           WHEN 1175
+                                               THEN "N/A"
+                                           ELSE "" END) , NULL))   AS birth_with_deformity,
          max(if(o.concept_id = 1282, (CASE o.value_coded
                                           WHEN 84893
                                               THEN "Yes"
@@ -916,8 +923,8 @@ CREATE PROCEDURE sp_update_etl_mchs_infants(IN last_update_time DATETIME)
                       uuid IN ('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
           ) f ON f.form_id = e.form_id
      WHERE e.voided = 0
-     GROUP BY e.encounter_id
-         ON DUPLICATE KEY UPDATE encounter_id=VALUES(encounter_id),patient_id=VALUES(patient_id),obs_group_id=VALUES(obs_group_id),infant_name=VALUES(infant_name),date_created=VALUES(date_created),gender=VALUES(gender),birth_weight=VALUES(birth_weight),infant_condition=VALUES(infant_condition),birth_with_deformity=VALUES(birth_with_deformity),teo_given=VALUES(teo_given),bf_within_one_hour=VALUES(bf_within_one_hour),apgar_score_1min=VALUES(apgar_score_1min),
+     GROUP BY o.obs_group_id
+         ON DUPLICATE KEY UPDATE encounter_id=VALUES(encounter_id),patient_id=VALUES(patient_id),obs_group_id=VALUES(obs_group_id),infant_name=VALUES(infant_name),gender=VALUES(gender),birth_weight=VALUES(birth_weight),infant_condition=VALUES(infant_condition),birth_with_deformity=VALUES(birth_with_deformity),teo_given=VALUES(teo_given),bf_within_one_hour=VALUES(bf_within_one_hour),apgar_score_1min=VALUES(apgar_score_1min),
     apgar_score_5min=VALUES(apgar_score_5min),apgar_score_10min=VALUES(apgar_score_10min)
 ;
 END$$
@@ -941,9 +948,6 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 			blood_loss,
 			condition_of_mother,
             delivery_outcome,
-			apgar_score_1min,
-			apgar_score_5min,
-			apgar_score_10min,
 			resuscitation_done,
 			place_of_delivery,
 			delivery_assistant,
@@ -958,12 +962,36 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 			coded_delivery_complications,
 			other_delivery_complications,
 			duration_of_labor,
-			baby_sex,
-			baby_condition,
-			teo_given,
-			birth_weight,
-			bf_within_one_hour,
-			birth_with_deformity,
+            infant_one_name,
+            infant_one_gender,
+            infant_one_weight,
+            infant_one_condition,
+            infant_one_birth_with_deformity,
+            infant_one_teo_given,
+            infant_one_bf_within_one_hour,
+            infant_one_apgar_score_1min,
+            infant_one_apgar_score_5min,
+            infant_one_apgar_score_10min,
+            infant_two_name,
+            infant_two_gender,
+            infant_two_weight,
+            infant_two_condition,
+            infant_two_birth_with_deformity,
+            infant_two_teo_given,
+            infant_two_bf_within_one_hour,
+            infant_two_apgar_score_1min,
+            infant_two_apgar_score_5min,
+            infant_two_apgar_score_10min,
+            infant_three_name,
+            infant_three_gender,
+            infant_three_weight,
+            infant_three_condition,
+            infant_three_birth_with_deformity,
+            infant_three_teo_given,
+            infant_three_bf_within_one_hour,
+            infant_three_apgar_score_1min,
+            infant_three_apgar_score_5min,
+            infant_three_apgar_score_10min,
 			final_test_result,
 			patient_given_result,
 			partner_hiv_tested,
@@ -989,9 +1017,6 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 				max(if(o.concept_id=162092,o.value_coded,null)) as blood_loss,
 				max(if(o.concept_id=1856,o.value_coded,null)) as condition_of_mother,
                 max(if(o.concept_id=159949,(case  o.value_coded when  159913 then "Single" when 159914 then "Twins" when 159915 then "Triplets" else "" end),null)) as delivery_outcome,
-				max(if(o.concept_id=159603,o.value_numeric,null)) as apgar_score_1min,
-				max(if(o.concept_id=159604,o.value_numeric,null)) as apgar_score_5min,
-				max(if(o.concept_id=159605,o.value_numeric,null)) as apgar_score_10min,
 				max(if(o.concept_id=162131,o.value_coded,null)) as resuscitation_done,
 				max(if(o.concept_id=1572,o.value_coded,null)) as place_of_delivery,
 				max(if(o.concept_id=1473,o.value_text,null)) as delivery_assistant,
@@ -1006,12 +1031,40 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 				max(if(o.concept_id=1576,o.value_coded,null)) as coded_delivery_complications,
 				max(if(o.concept_id=162093,o.value_text,null)) as other_delivery_complications,
 				max(if(o.concept_id=159616,o.value_numeric,null)) as duration_of_labor,
-				max(if(o.concept_id=1587,o.value_coded,null)) as baby_sex,
-				max(if(o.concept_id=159917,o.value_coded,null)) as baby_condition,
-				max(if(o.concept_id=1282 and o.value_coded = 84893,1,0)) as teo_given,
-				max(if(o.concept_id=165578,o.value_numeric,null)) as birth_weight,
-				max(if(o.concept_id=161543,o.value_coded,null)) as bf_within_one_hour,
-				max(if(o.concept_id=164122,o.value_coded,null)) as birth_with_deformity,
+                (SELECT infant_name from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 0) as infant_one_name,
+        (SELECT gender from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 0) as infant_one_gender,
+        (SELECT birth_weight from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 0) as infant_one_weight,
+        (SELECT infant_condition from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 0) as infant_one_condition,
+        (SELECT birth_with_deformity from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 0) as infant_one_birth_with_deformity,
+        (SELECT teo_given from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 0) as infant_one_teo_given,
+        (SELECT bf_within_one_hour from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 0) as infant_one_bf_within_one_hour,
+        (SELECT apgar_score_1min from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 0) as infant_one_apgar_score_1min,
+        (SELECT apgar_score_5min from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 0) as infant_one_apgar_score_5min,
+        (SELECT apgar_score_10min from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 0) as infant_one_apgar_score_10min,
+
+        (SELECT infant_name from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id  order by obs_group_id LIMIT 1 OFFSET 1) as infant_two_name,
+        (SELECT gender from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 1) as infant_two_gender,
+        (SELECT birth_weight from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 1) as infant_two_weight,
+        (SELECT infant_condition from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 1) as infant_two_condition,
+        (SELECT birth_with_deformity from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 1) as infant_two_birth_with_deformity,
+        (SELECT teo_given from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 1) as infant_two_teo_given,
+        (SELECT bf_within_one_hour from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 1) as infant_two_bf_within_one_hour,
+        (SELECT apgar_score_1min from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 1) as infant_two_apgar_score_1min,
+        (SELECT apgar_score_5min from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 1) as infant_two_apgar_score_5min,
+        (SELECT apgar_score_10min from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 1) as infant_two_apgar_score_10min,
+
+
+        (SELECT infant_name from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_name,
+        (SELECT gender from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_gender,
+        (SELECT birth_weight from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_weight,
+        (SELECT infant_condition from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_condition,
+        (SELECT birth_with_deformity from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_birth_with_deformity,
+        (SELECT teo_given from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_teo_given,
+        (SELECT bf_within_one_hour from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_bf_within_one_hour,
+        (SELECT apgar_score_1min from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_apgar_score_1min,
+        (SELECT apgar_score_5min from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_apgar_score_5min,
+        (SELECT apgar_score_10min from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_apgar_score_10min,
+
 				max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
 				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
@@ -1038,9 +1091,8 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 						or o.date_voided >= last_update_time
 			group by e.encounter_id
 		ON DUPLICATE KEY UPDATE provider=VALUES(provider),visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),date_created=VALUES(date_created),admission_number=VALUES(admission_number),duration_of_pregnancy=VALUES(duration_of_pregnancy),mode_of_delivery=VALUES(mode_of_delivery),date_of_delivery=VALUES(date_of_delivery),blood_loss=VALUES(blood_loss),condition_of_mother=VALUES(condition_of_mother),delivery_outcome=VALUES(delivery_outcome),
-			apgar_score_1min=VALUES(apgar_score_1min),apgar_score_5min=VALUES(apgar_score_5min),apgar_score_10min=VALUES(apgar_score_10min),resuscitation_done=VALUES(resuscitation_done),place_of_delivery=VALUES(place_of_delivery),delivery_assistant=VALUES(delivery_assistant),counseling_on_infant_feeding=VALUES(counseling_on_infant_feeding) ,counseling_on_exclusive_breastfeeding=VALUES(counseling_on_exclusive_breastfeeding),
-			counseling_on_infant_feeding_for_hiv_infected=VALUES(counseling_on_infant_feeding_for_hiv_infected),mother_decision=VALUES(mother_decision),placenta_complete=VALUES(placenta_complete),maternal_death_audited=VALUES(maternal_death_audited),cadre=VALUES(cadre),delivery_complications=VALUES(delivery_complications),coded_delivery_complications=VALUES(coded_delivery_complications),other_delivery_complications=VALUES(other_delivery_complications),duration_of_labor=VALUES(duration_of_labor),baby_sex=VALUES(baby_sex),
-			baby_condition=VALUES(baby_condition),teo_given=VALUES(teo_given),birth_weight=VALUES(birth_weight),bf_within_one_hour=VALUES(bf_within_one_hour),birth_with_deformity=VALUES(birth_with_deformity),
+			resuscitation_done=VALUES(resuscitation_done),place_of_delivery=VALUES(place_of_delivery),delivery_assistant=VALUES(delivery_assistant),counseling_on_infant_feeding=VALUES(counseling_on_infant_feeding) ,counseling_on_exclusive_breastfeeding=VALUES(counseling_on_exclusive_breastfeeding),
+			counseling_on_infant_feeding_for_hiv_infected=VALUES(counseling_on_infant_feeding_for_hiv_infected),mother_decision=VALUES(mother_decision),placenta_complete=VALUES(placenta_complete),maternal_death_audited=VALUES(maternal_death_audited),cadre=VALUES(cadre),delivery_complications=VALUES(delivery_complications),coded_delivery_complications=VALUES(coded_delivery_complications),other_delivery_complications=VALUES(other_delivery_complications),duration_of_labor=VALUES(duration_of_labor),
 			final_test_result=VALUES(final_test_result),patient_given_result=VALUES(patient_given_result),partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given)
 			,baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed),clinical_notes=VALUES(clinical_notes)
 
