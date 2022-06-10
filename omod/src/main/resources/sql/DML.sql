@@ -1145,7 +1145,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
         (SELECT gender from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_gender,
         (SELECT birth_weight from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_weight,
         (SELECT infant_condition from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_condition,
-        (SELECT birth_with_deformity from kenyaemr_etl.etl_mchs_infants order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_birth_with_deformity,
+        (SELECT birth_with_deformity from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id  order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_birth_with_deformity,
         (SELECT teo_given from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_teo_given,
         (SELECT bf_within_one_hour from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_bf_within_one_hour,
         (SELECT apgar_score_1min from kenyaemr_etl.etl_mchs_infants where encounter_id = e.encounter_id order by obs_group_id LIMIT 1 OFFSET 2) as infant_three_apgar_score_1min,
